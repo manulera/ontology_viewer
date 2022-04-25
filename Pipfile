@@ -8,6 +8,8 @@ requests = "*"
 pronto = "*"
 ipykernel = "*"
 vega = "*"
+flask = "*"
+flask-cors = "*"
 
 [dev-packages]
 
