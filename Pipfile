@@ -8,8 +8,9 @@ requests = "*"
 pronto = "*"
 ipykernel = "*"
 vega = "*"
-flask = "*"
+flask = {extras = ["async"], version = "*"}
 flask-cors = "*"
+grequests = "*"
 
 [dev-packages]
 

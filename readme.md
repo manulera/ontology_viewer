@@ -2,5 +2,5 @@ To run
 
 ```
 export FLASK_ENV=development
-pipenv flask run
+pipenv run flask run
 ```

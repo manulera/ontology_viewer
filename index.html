@@ -50,11 +50,22 @@
     <div class="container mx-auto col-6">
         <h1>Ontology map creator</h1>
 
-        <div class="form-group ">
-            <label for="ontology-term">Ontology ID</label>
-            <input type="text" class="form-control" id="ontology-term" value="FYPO:0000276">
+        <div class="form-group">
+            <label for="ontology-url">Ontology-url - select from the list</label>
+            <select class="form-select" aria-label="Default select example" id="ontology-url">
+                <option selected value="">Open this select menu</option>
+                <option value="https://github.com/pombase/fypo/raw/master/fypo-base.obo">FYPO-last</option>
+                <option value="https://github.com/geneontology/go-ontology/raw/master/src/ontology/go-edit.obo">GO-last</option>
+              </select>
+
+            <label for="ontology-url">Ontology url - write your URL</label>
+            <input type="text" class="form-control m-2" id="ontology-url" value="https://github.com/pombase/fypo/raw/master/fypo-base.obo">
+
+            <label for="ontology-term  m-2">Term ID</label>
+            <input type="text" class="form-control m-2" id="ontology-term" value="FYPO:0000276">
+
         </div>
-        <button type="submit" class="btn btn-primary" onclick="makePostRequest()">Submit</button>
+        <button type="submit" class="btn btn-primary m-2" onclick="makePostRequest()">Submit</button>
         <pre><code id="markdown-result" onclick="copyText()">
         </code></pre>
         <div class="mermaid" id="mermaid">
