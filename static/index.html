@@ -19,7 +19,7 @@
         function makePostRequest() {
             const ele = document.getElementById('ontology-term')
             axios
-                .post('http://127.0.0.1:5000/', { id: ele.value })
+                .post('http://127.0.0.1:5000/request', { id: ele.value })
                 .then((resp) => {
                     const codeblock = document.getElementById('markdown-result');
                     const mermaidblock = document.getElementById('mermaid');
