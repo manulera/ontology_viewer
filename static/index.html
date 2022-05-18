@@ -14,22 +14,33 @@
         crossorigin="anonymous" referrerpolicy="no-referrer"></script>
     <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
     <style>
+        .mermaid {
+            text-align: center;
+            width: unset;
+        }
     </style>
     <script>
         function makePostRequest() {
-            const ele = document.getElementById('ontology-term')
+            const requestData = {
+                id: document.getElementById('ontology-term').value,
+                requestParents: document.getElementById('requestParents').checked,
+                requestChildren: document.getElementById('requestChildren').checked,
+            }
             axios
-                .post('http://127.0.0.1:5000/request', { id: ele.value })
+                .post('http://127.0.0.1:5000/request', requestData)
                 .then((resp) => {
                     const codeblock = document.getElementById('markdown-result');
                     const mermaidblock = document.getElementById('mermaid');
 
                     codeblock.textContent = resp.data.mermaid_text;
                     const textArray = resp.data.mermaid_text.split(/\r?\n/)
-                    const mermaidOnlyText = textArray.slice(1,textArray.length-2).join("\n")
+                    const mermaidOnlyText = textArray.slice(1, textArray.length - 2).join("\n")
                     mermaidblock.textContent = mermaidOnlyText;
                     mermaidblock.removeAttribute('data-processed')
                     mermaid.init(undefined)
+                    const svgElement = document.getElementsByTagName('svg')[0]
+                    svgElement.style.maxWidth = 'unset'
+                    svgElement.style.width = 'unset'
                 })
         }
         function copyText() {
@@ -51,28 +62,45 @@
         <h1>Ontology map creator</h1>
 
         <div class="form-group">
-            <label for="ontology-url">Ontology-url - select from the list</label>
-            <select class="form-select" aria-label="Default select example" id="ontology-url">
+            <!-- <label for="ontology-url">Ontology-url - select from the list</label> -->
+            <!-- <select class="form-select" aria-label="Default select example" id="ontology-url">
                 <option selected value="">Open this select menu</option>
                 <option value="https://github.com/pombase/fypo/raw/master/fypo-base.obo">FYPO-last</option>
-                <option value="https://github.com/geneontology/go-ontology/raw/master/src/ontology/go-edit.obo">GO-last</option>
-              </select>
+                <option value="https://github.com/geneontology/go-ontology/raw/master/src/ontology/go-edit.obo">GO-last
+                </option>
+            </select>
 
             <label for="ontology-url">Ontology url - write your URL</label>
-            <input type="text" class="form-control m-2" id="ontology-url" value="https://github.com/pombase/fypo/raw/master/fypo-base.obo">
+            <input type="text" class="form-control m-2" id="ontology-url"
+                value="https://github.com/pombase/fypo/raw/master/fypo-base.obo"> -->
 
-            <label for="ontology-term  m-2">Term ID</label>
-            <input type="text" class="form-control m-2" id="ontology-term" value="FYPO:0000276">
+            <div class="row align-items-center mb-3">
+                <div class="col-auto">
+                    <input class="form-check-input" type="checkbox" value="" id="requestParents" checked>
+                    <label class="form-check-label" for="requestParents">
+                        Request parents
+                    </label>
+                </div>
+                <div class="col-auto">
+                    <input class="form-check-input" type="checkbox" value="" id="requestChildren" checked>
+                    <label class="form-check-label" for="requestChildren">
+                        Request children
+                    </label>
+                </div>
+                <div class="col-auto form-floating">
+                    <input type="text" class="form-control" id="ontology-term" value="FYPO:0000901">
+                    <label for="ontology-term">Term ID</label>
+                </div>
+
+            </div>
 
         </div>
         <button type="submit" class="btn btn-primary m-2" onclick="makePostRequest()">Submit</button>
         <pre><code id="markdown-result" onclick="copyText()">
         </code></pre>
-        <div class="mermaid" id="mermaid">
-
-        </div>
     </div>
-
+    </div>
+    <div class="mermaid" id="mermaid">
 </body>
 
 </html>
