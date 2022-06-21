@@ -20,7 +20,41 @@
         }
     </style>
     <script>
-        function makePostRequest() {
+        var mermaidText = ''
+
+        function editName(name) {
+            // Introduce a <br> each 20 characters so that the text fits in the boxes of mermaid
+            return name.replace(/(.{20})/g, "$1<br>")
+
+        }
+
+        function termWithLink(term, submittedIds) {
+            let linkDict = {
+                'FYPO': 'https://www.pombase.org/term/',
+                'GO': 'https://www.ebi.ac.uk/QuickGO/term/'
+            }
+            let ontologyName = term.id.split(':')[0]
+            let text = `<a href=${linkDict[ontologyName]}${term.id}>${term.id}</a><br>${editName(term.name)}`
+            if (submittedIds.includes(term.id)) { text = `<u><strong>${text}</strong></u>` }
+            return text
+        }
+
+        function updateMermaidText(terms, relationships, submittedIds) {
+            let mermaidLines = []
+            relationships.forEach((r) => {
+                parent = terms.find(term => term.id === r.parent)
+                child = terms.find(term => term.id === r.child)
+                mermaidLines.push(`      ${parent.id}["${termWithLink(parent, submittedIds)}"]-->${child.id}["${termWithLink(child, submittedIds)}"];`)
+            })
+            const left2right = document.getElementById('tree-left2right').checked
+            const firstPart = left2right ? '```mermaid\ngraph LR;\n' : '```mermaid\ngraph TD;\n'
+            mermaidText = firstPart + mermaidLines.join('\n') + '\n```\n'
+
+        }
+
+        function makePostRequest(submitEvent) {
+            submitEvent.preventDefault();
+            const submittedIds = document.getElementById('ontology-term').value.split(',')
             const requestData = {
                 id: document.getElementById('ontology-term').value,
                 requestParents: document.getElementById('requestParents').checked,
@@ -31,9 +65,9 @@
                 .then((resp) => {
                     const codeblock = document.getElementById('markdown-result');
                     const mermaidblock = document.getElementById('mermaid');
-
-                    codeblock.textContent = resp.data.mermaid_text;
-                    const textArray = resp.data.mermaid_text.split(/\r?\n/)
+                    updateMermaidText(resp.data.terms, resp.data.relationships, submittedIds)
+                    codeblock.textContent = mermaidText;
+                    const textArray = mermaidText.split(/\r?\n/)
                     const mermaidOnlyText = textArray.slice(1, textArray.length - 2).join("\n")
                     mermaidblock.textContent = mermaidOnlyText;
                     mermaidblock.removeAttribute('data-processed')
@@ -53,6 +87,10 @@
                 });
 
         }
+
+        window.onload = () => {
+            document.getElementById('main-form').addEventListener("submit", makePostRequest)
+        }
     </script>
 
 </head>
@@ -61,42 +99,38 @@
     <div class="container mx-auto col-6">
         <h1>Ontology map creator</h1>
 
-        <div class="form-group">
-            <!-- <label for="ontology-url">Ontology-url - select from the list</label> -->
-            <!-- <select class="form-select" aria-label="Default select example" id="ontology-url">
-                <option selected value="">Open this select menu</option>
-                <option value="https://github.com/pombase/fypo/raw/master/fypo-base.obo">FYPO-last</option>
-                <option value="https://github.com/geneontology/go-ontology/raw/master/src/ontology/go-edit.obo">GO-last
-                </option>
-            </select>
-
-            <label for="ontology-url">Ontology url - write your URL</label>
-            <input type="text" class="form-control m-2" id="ontology-url"
-                value="https://github.com/pombase/fypo/raw/master/fypo-base.obo"> -->
-
+        <form class="form-group" id="main-form">
             <div class="row align-items-center mb-3">
                 <div class="col-auto">
-                    <input class="form-check-input" type="checkbox" value="" id="requestParents" checked>
-                    <label class="form-check-label" for="requestParents">
-                        Request parents
-                    </label>
+                    <label for="ontology-term">Term IDs (comma separated)</label>
+                    <input type="text" class="form-control" id="ontology-term" value="FYPO:0007954,FYPO:0004650">
                 </div>
                 <div class="col-auto">
-                    <input class="form-check-input" type="checkbox" value="" id="requestChildren" checked>
-                    <label class="form-check-label" for="requestChildren">
-                        Request children
-                    </label>
+                    <div>
+                        <input class="form-check-input" type="checkbox" value="" id="requestChildren" checked>
+                        <label class="form-check-label" for="requestChildren">
+                            Request children
+                        </label>
+                    </div>
+                    <div>
+                        <input class="form-check-input" type="checkbox" value="" id="requestParents" checked>
+                        <label class="form-check-label" for="requestParents">
+                            Request parents
+                        </label>
+                    </div>
+                    <div>
+                        <input class="form-check-input" type="checkbox" value="" id="tree-left2right">
+                        <label class="form-check-label" for="tree-left2right">
+                            Show tree left to right
+                        </label>
+                    </div>
                 </div>
-                <div class="col-auto form-floating">
-                    <input type="text" class="form-control" id="ontology-term" value="FYPO:0000901">
-                    <label for="ontology-term">Term ID</label>
-                </div>
-
             </div>
+            <input type="submit" class="btn btn-primary m-2" />
+        </form>
+        <button class="btn btn-success m-2" onclick="copyText()">Copy mermaid code</button>
 
-        </div>
-        <button type="submit" class="btn btn-primary m-2" onclick="makePostRequest()">Submit</button>
-        <pre><code id="markdown-result" onclick="copyText()">
+        <pre><code id="markdown-result" hidden onclick="copyText()">
         </code></pre>
     </div>
     </div>

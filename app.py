@@ -1,8 +1,7 @@
 from flask import Flask,jsonify,request, current_app
 from flask_cors import CORS
 import pronto
-import requests
-import io
+
 app = Flask(__name__)
 CORS(app)
 app.config['CACHE_TYPE'] = 'null'
@@ -13,9 +12,9 @@ def load_ontologies():
     print('loading FYPO...')
     fypo = pronto.Ontology('https://github.com/pombase/fypo/raw/master/fypo-base.obo')
     print('FYPO loaded')
-    # print('loading GO...')
-    # go_ontology = pronto.Ontology('http://current.geneontology.org/ontology/go.obo')
-    # print('GO loaded')
+    print('loading GO...')
+    go_ontology = pronto.Ontology('http://current.geneontology.org/ontology/go.obo')
+    print('GO loaded')
     ONTOLOGIES = {
         'FYPO': fypo,
         # 'GO': go_ontology
@@ -39,14 +38,38 @@ def term_with_link(term: pronto.Term, submitted_ids: list[str]) -> str:
         text = f'<u><strong>{text}</strong></u>'
     return text
 
+def serialize_term(term:pronto.Term) ->dict:
+    return hash_dict({
+        "id": term.id,
+        "name": term.name,
+        "definition": term.definition,
+        # "equivalent_to": term.equivalent_to
+    })
+
+def serialize_relationship(parent: pronto.Term,child: pronto.Term,type: str):
+    return hash_dict({
+        'parent': parent.id,
+        'child': child.id,
+        'type': 'is_a'
+    })
+
+def hash_dict(unhashed_dict: dict)->frozenset:
+    return frozenset(unhashed_dict.items())
+
+def unhash_dict(hashed_dict: frozenset):
+    unhashed_dict = dict()
+    for key, value in hashed_dict:
+        unhashed_dict[key] = value
+    return unhashed_dict
+
 @app.route('/request', methods = ['POST'])
 def main_request():
     data = request.get_json()
-    string_body = '```mermaid\ngraph TD;\n'
     submitted_ids = data['id'].split(',')
 
     # We make a set to avoid repetition
-    output_lines = set()
+    terms = set()
+    relationships = set()
 
     for id in submitted_ids:
         ontology = id.split(':')[0]
@@ -54,23 +77,24 @@ def main_request():
 
         if data['requestChildren']:
             children = term.subclasses().to_set()
-
             for child in children:
                 # Parents of this child that are linked to the selected term (that's why it does the intersection with the children)
                 parent_subset = child.superclasses(with_self=False, distance=1).to_set() & children
+                terms.add(serialize_term(child))
                 for parent in parent_subset:
-                    output_lines.add(f'      {parent.id}["{term_with_link(parent,submitted_ids)}"]-->{child.id}["{term_with_link(child,submitted_ids)}"];')
+                    terms.add(serialize_term(parent))
+                    relationships.add(serialize_relationship(parent,child,'is_a'))
+
         if data['requestParents']:
             parents = term.superclasses().to_set()
             for parent in parents:
                 # Children of this parent that are linked to the selected term (that's why it does the intersection)
                 child_subset = parent.subclasses(with_self=False, distance=1).to_set() & parents
+                terms.add(serialize_term(parent))
                 for child in child_subset:
-                    output_lines.add(f'      {parent.id}["{term_with_link(parent,submitted_ids)}"]-->{child.id}["{term_with_link(child,submitted_ids)}"];')
+                    terms.add(serialize_term(child))
+                    relationships.add(serialize_relationship(parent,child,'is_a'))
 
-    string_body+="\n".join(output_lines)
-    string_body+='\n```\n'
-
-    return jsonify({
-        'mermaid_text': string_body,
-    })
+    terms = [unhash_dict(t) for t in terms]
+    relationships = [unhash_dict(r) for r in relationships]
+    return jsonify({'terms': terms, 'relationships': relationships,})
