@@ -9,7 +9,7 @@ docker pull manulera/ontologyviewer
 docker run -d --name ontologyviewercontainer -p 5000:5000 manulera/ontologyviewer
 ```
 
-Now you should be able to use the application at http://localhost:5000/. First time you try to open the URL it may take a bit longer, since it is loading the ontologies.
+Now you should be able to use the application at http://localhost:5000/. First time you try to open the URL it may take a bit longer, since it is loading the ontologies. Next times it should be fast.
 
 When you are done, go to the Docker user interface:
 
