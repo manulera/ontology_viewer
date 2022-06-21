@@ -9,11 +9,17 @@ app.config['CACHE_TYPE'] = 'null'
 
 @app.before_first_request
 def load_ontologies():
-     global ONTOLOGIES
-     ONTOLOGIES = {
-         'FYPO': pronto.Ontology('https://github.com/pombase/fypo/raw/master/fypo-base.obo'),
-         'GO': pronto.Ontology('http://current.geneontology.org/ontology/go.obo')
-     }
+    global ONTOLOGIES
+    print('loading FYPO...')
+    fypo = pronto.Ontology('https://github.com/pombase/fypo/raw/master/fypo-base.obo')
+    print('FYPO loaded')
+    # print('loading GO...')
+    # go_ontology = pronto.Ontology('http://current.geneontology.org/ontology/go.obo')
+    # print('GO loaded')
+    ONTOLOGIES = {
+        'FYPO': fypo,
+        # 'GO': go_ontology
+    }
 
 @app.route('/', methods = ['GET'])
 def index():
@@ -30,7 +36,7 @@ def term_with_link(term: pronto.Term, submitted_ids: list[str]) -> str:
     ontology_name = term.id.split(':')[0]
     text = f'<a href={link_dict[ontology_name]}{term.id}>{term.id}</a><br>{editName(term.name)}'
     if term.id in submitted_ids:
-        text = f'<strong>{text}</strong>'
+        text = f'<u><strong>{text}</strong></u>'
     return text
 
 @app.route('/request', methods = ['POST'])

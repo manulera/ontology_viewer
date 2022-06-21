@@ -56,4 +56,4 @@ COPY --from=builder-base $PYSETUP_PATH $PYSETUP_PATH
 COPY ./ /app/
 WORKDIR /app
 EXPOSE 5000
-CMD ["flask", "run"]
+CMD ["flask", "run","--host=0.0.0.0"]
